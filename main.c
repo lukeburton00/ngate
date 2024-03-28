@@ -36,10 +36,10 @@ int main(int argc, char* argv[])
     host_addr.sin_family = AF_INET;
     host_addr.sin_port = htons(port);
     host_addr.sin_addr.s_addr = htonl(INADDR_ANY);
-    int host_addr_length = sizeof(host_addr);
+    socklen_t host_addr_length = sizeof(host_addr);
 
     struct sockaddr_in client_addr;
-    int client_addr_length = sizeof(client_addr);
+    socklen_t client_addr_length = sizeof(client_addr);
 
     if (bind(socket_fd, (struct sockaddr *)&host_addr, host_addr_length) < 0)
     {
