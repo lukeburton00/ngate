@@ -1,10 +1,8 @@
 #include <stdio.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
-#include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
-#include <errno.h>
 #include <arpa/inet.h>
 
 int main(int argc, char* argv[])
@@ -17,13 +15,7 @@ int main(int argc, char* argv[])
     "Content-type: text/html\r\n\r\n"
     "<html>Hello, World!</html>\r\n";
 
-    if (argc != 2 || atoi(argv[1]) == 0)
-    {
-        printf("Please specify a non-zero integer port.\n");
-        return 1;
-    }
-
-    int port = atoi(argv[1]);
+    const int PORT = 3000; 
 
     int socket_fd = socket(AF_INET, SOCK_STREAM, 0);
     if (socket_fd < 0)
@@ -34,7 +26,7 @@ int main(int argc, char* argv[])
 
     struct sockaddr_in host_addr;
     host_addr.sin_family = AF_INET;
-    host_addr.sin_port = htons(port);
+    host_addr.sin_port = htons(PORT);
     host_addr.sin_addr.s_addr = htonl(INADDR_ANY);
     socklen_t host_addr_length = sizeof(host_addr);
 
@@ -52,7 +44,7 @@ int main(int argc, char* argv[])
         perror("webs failed to begin listen");
     }
 
-    printf("webs listening on port %d\n", port);
+    printf("webs listening on port %d\n", PORT);
 
     for(;;)
     {
