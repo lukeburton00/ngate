@@ -1,82 +1,155 @@
+#include <stdlib.h>
 #include <stdio.h>
+#include <sys/types.h>
 #include <sys/socket.h>
-#include <netinet/in.h>
 #include <unistd.h>
+#include <netdb.h>
 #include <string.h>
-#include <arpa/inet.h>
+#include <errno.h>
+#include <pthread.h>
+#include <signal.h>
+
+volatile sig_atomic_t stop = 0;
+
+void handle_signal(int signal) {
+    stop = 1;
+}
+
+void * handle_connection(void* connection)
+{
+    int clientfd = *(int*)connection;
+    free(connection);
+
+    char request[1024];
+    memset(request, 0, sizeof(request));
+
+    ssize_t bytes_received = recv(clientfd, request, sizeof(request), 0);
+    if (bytes_received < 0)
+    {
+        printf("recv error: %s\n", strerror(errno));
+        close(clientfd);
+        return NULL;
+    }
+
+    char method[16], path[256], protocol[16];
+    sscanf(request, "%s %s %s", method, path, protocol);
+    printf("%s %s %s\n", method, path, protocol);
+
+    char response[1024];
+    memset(response, 0, sizeof(response));
+    sprintf(response, "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n\r\n<html><body><h1>Hello World!</h1></body></html>\r\n");
+
+    if (send(clientfd, response, sizeof(response) - 1, 0) < 0)
+    {
+        printf("send error: %s\n", strerror(errno));
+    }
+
+    close(clientfd);
+    return NULL;
+}
 
 int main(int argc, char* argv[])
 {
-    int backlog_len = 128;
-    int buffer_size = 1024;
-    char req_buffer[buffer_size];
-    char response[] = "HTTP/1.0 200 OK\r\n"
-    "Server: webs\r\n"
-    "Content-type: text/html\r\n\r\n"
-    "<html>Hello, World!</html>\r\n";
+    struct sigaction sa;
+    sa.sa_handler = handle_signal;
+    sa.sa_flags = 0;
+    sigemptyset(&sa.sa_mask);
+    if (sigaction(SIGINT, &sa, NULL) == -1) {
+        perror("sigaction");
+        exit(1);
+    }
 
-    const int PORT = 3000; 
+    int backlog_len = 10;
+    const char *PORT = "3000";
 
-    int socket_fd = socket(AF_INET, SOCK_STREAM, 0);
-    if (socket_fd < 0)
+    int status;
+    struct addrinfo hints;
+    struct addrinfo *servinfo;
+
+    memset(&hints, 0, sizeof(hints));
+    hints.ai_family = AF_UNSPEC;
+    hints.ai_socktype = SOCK_STREAM;
+    hints.ai_flags = AI_PASSIVE;
+
+    if ((status = getaddrinfo(NULL, PORT, &hints, &servinfo)) != 0)
     {
-        perror("webs failed to create socket\n");
+        printf("getaddrinfo: %s\n", gai_strerror(status));
         return 1;
     }
 
-    struct sockaddr_in host_addr;
-    host_addr.sin_family = AF_INET;
-    host_addr.sin_port = htons(PORT);
-    host_addr.sin_addr.s_addr = htonl(INADDR_ANY);
-    socklen_t host_addr_length = sizeof(host_addr);
+    int sockfd = socket(servinfo->ai_family, servinfo->ai_socktype, servinfo->ai_protocol);
 
-    struct sockaddr_in client_addr;
-    socklen_t client_addr_length = sizeof(client_addr);
-
-    if (bind(socket_fd, (struct sockaddr *)&host_addr, host_addr_length) < 0)
+    if (sockfd < 0)
     {
-        perror("webs failed to bind socket\n");
+        printf("socket error: %s\n", strerror(errno));
+        freeaddrinfo(servinfo);
         return 1;
     }
 
-    if(listen(socket_fd, backlog_len) < 0)
+    if (bind(sockfd, servinfo->ai_addr, servinfo->ai_addrlen) < 0)
     {
-        perror("webs failed to begin listen");
+        printf("bind error: %s\n", strerror(errno));
+        freeaddrinfo(servinfo);
+        close(sockfd);
+        return 1;
     }
 
-    printf("webs listening on port %d\n", PORT);
+    freeaddrinfo(servinfo);
 
-    for(;;)
+    int yes = 1;
+    if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(yes)) < 0)
     {
-        int conn_fd = accept(socket_fd, (struct sockaddr *)&host_addr, &host_addr_length);
-        if (conn_fd < 0) 
-        { 
-            perror("webs detected a request and failed to accept"); 
-            continue;
-        }
-
-        int socket_name = getsockname(conn_fd, (struct sockaddr *)&client_addr, &client_addr_length);
-        if (socket_name < 0)
-        {
-            perror("webs could not retrieve client socket name");
-            continue;
-        }
-
-        int read_req = read(conn_fd, req_buffer, buffer_size);
-        if (read_req < 0)
-        {
-            perror("webs could not read request");
-            continue;
-        }
-        char method[buffer_size], uri[buffer_size], version[buffer_size];
-        sscanf(req_buffer, "%s %s %s", method, uri, version);
-        printf("[%s:%u] %s %s %s\n", inet_ntoa(client_addr.sin_addr),
-               ntohs(client_addr.sin_port), method, version, uri);
-        
-        int write_res = write(conn_fd, response, strlen(response));
-
-        close(conn_fd); 
+        printf("setsockopt error: %s\n", strerror(errno));
+        close(sockfd);
+        return 1;
     }
+
+    if (listen(sockfd, backlog_len) < 0)
+    {
+        printf("listen error: %s\n", strerror(errno));
+        close(sockfd);
+        return 1;
+    }
+
+    printf("nGate is listening on port %s\n", PORT);
+
+    while (!stop)
+    {
+        struct sockaddr_storage clientaddr;
+        socklen_t addrlen = sizeof(clientaddr);
+
+        int clientfd = accept(sockfd, (struct sockaddr *)&clientaddr, &addrlen);
+        if (clientfd < 0)
+        {
+            if (errno == EINTR && stop) {
+                break;
+            }
+            printf("accept error: %s\n", strerror(errno));
+            continue;
+        }
+
+        int *pclient = malloc(sizeof(int));
+        if (pclient == NULL)
+        {
+            printf("malloc error, closing connection\n");
+            close(clientfd);
+            continue;
+        }
+        *pclient = clientfd;
+
+        pthread_t thread;
+        if (pthread_create(&thread, NULL, handle_connection, pclient)!= 0)
+        {
+            printf("pthread_create error, closing connection\n");
+            free(pclient);
+            close(clientfd);
+            continue;
+        }
+
+        pthread_detach(thread);
+    }
+
+    close(sockfd);
 
     return 0;
 }
