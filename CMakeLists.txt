@@ -4,7 +4,8 @@ project(ngate)
 
 set(SRC 
 ${CMAKE_SOURCE_DIR}/src/main.c
-${CMAKE_SOURCE_DIR}/src/networking.c)
+${CMAKE_SOURCE_DIR}/src/networking.c
+${CMAKE_SOURCE_DIR}/src/config.c)
 
 add_executable(${PROJECT_NAME} ${SRC})
 

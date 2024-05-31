@@ -52,6 +52,8 @@ void * handle_connection(void *connection)
 
 int main(int argc, char* argv[])
 {
+    AppContext context = configure_context(argc, argv);
+
     struct sigaction sa;
     sa.sa_handler = handle_signal;
     sa.sa_flags = 0;
@@ -60,10 +62,6 @@ int main(int argc, char* argv[])
         perror("sigaction");
         exit(1);
     }
-
-    AppContext context;
-
-    context.port = "3000";
 
     if (begin_listen(&context) < 0)
     {
