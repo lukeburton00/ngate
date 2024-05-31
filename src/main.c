@@ -8,6 +8,8 @@
 #include <errno.h>
 #include <pthread.h>
 #include <signal.h>
+#include "../include/networking.h"
+#include "../include/config.h"
 
 volatile sig_atomic_t stop = 0;
 
@@ -15,9 +17,9 @@ void handle_signal(int signal) {
     stop = 1;
 }
 
-void * handle_connection(void* connection)
+void * handle_connection(void *connection)
 {
-    int clientfd = *(int*)connection;
+    int clientfd = *(int *)connection;
     free(connection);
 
     char request[1024];
@@ -59,97 +61,56 @@ int main(int argc, char* argv[])
         exit(1);
     }
 
-    int backlog_len = 10;
-    const char *PORT = "3000";
+    AppContext context;
 
-    int status;
-    struct addrinfo hints;
-    struct addrinfo *servinfo;
+    context.port = "3000";
 
-    memset(&hints, 0, sizeof(hints));
-    hints.ai_family = AF_UNSPEC;
-    hints.ai_socktype = SOCK_STREAM;
-    hints.ai_flags = AI_PASSIVE;
-
-    if ((status = getaddrinfo(NULL, PORT, &hints, &servinfo)) != 0)
+    if (begin_listen(&context) < 0)
     {
-        printf("getaddrinfo: %s\n", gai_strerror(status));
-        return 1;
+        printf("begin_listen error\n");
+        return -1;
     }
 
-    int sockfd = socket(servinfo->ai_family, servinfo->ai_socktype, servinfo->ai_protocol);
-
-    if (sockfd < 0)
-    {
-        printf("socket error: %s\n", strerror(errno));
-        freeaddrinfo(servinfo);
-        return 1;
-    }
-
-    if (bind(sockfd, servinfo->ai_addr, servinfo->ai_addrlen) < 0)
-    {
-        printf("bind error: %s\n", strerror(errno));
-        freeaddrinfo(servinfo);
-        close(sockfd);
-        return 1;
-    }
-
-    freeaddrinfo(servinfo);
-
-    int yes = 1;
-    if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(yes)) < 0)
-    {
-        printf("setsockopt error: %s\n", strerror(errno));
-        close(sockfd);
-        return 1;
-    }
-
-    if (listen(sockfd, backlog_len) < 0)
-    {
-        printf("listen error: %s\n", strerror(errno));
-        close(sockfd);
-        return 1;
-    }
-
-    printf("nGate is listening on port %s\n", PORT);
+    printf("nGate is listening on port %s\n", context.port);
 
     while (!stop)
     {
         struct sockaddr_storage clientaddr;
         socklen_t addrlen = sizeof(clientaddr);
 
-        int clientfd = accept(sockfd, (struct sockaddr *)&clientaddr, &addrlen);
-        if (clientfd < 0)
+        int *clientfd = malloc(sizeof(int));
+        if (!clientfd)
         {
-            if (errno == EINTR && stop) {
+            perror("malloc");
+            continue;
+        }
+
+        *clientfd = accept(context.sockfd, (struct sockaddr *)&clientaddr, &addrlen);
+        if (*clientfd < 0)
+        {
+            free(clientfd);
+            if (errno == EINTR && stop) 
+            {
                 break;
             }
             printf("accept error: %s\n", strerror(errno));
             continue;
         }
 
-        int *pclient = malloc(sizeof(int));
-        if (pclient == NULL)
-        {
-            printf("malloc error, closing connection\n");
-            close(clientfd);
-            continue;
-        }
-        *pclient = clientfd;
-
         pthread_t thread;
-        if (pthread_create(&thread, NULL, handle_connection, pclient)!= 0)
+
+        if (pthread_create(&thread, NULL, handle_connection, clientfd)!= 0)
         {
             printf("pthread_create error, closing connection\n");
-            free(pclient);
-            close(clientfd);
+            close(*clientfd);
+            free(clientfd);
             continue;
         }
 
         pthread_detach(thread);
     }
 
-    close(sockfd);
+    close(context.sockfd);
 
     return 0;
 }
