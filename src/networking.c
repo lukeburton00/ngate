@@ -11,6 +11,57 @@
 
 #include "../include/config.h"
 
+Session *create_session()
+{
+    Session *session = malloc(sizeof(Session));
+    if (!session)
+    {
+        perror("malloc session\n");
+        return NULL;
+    }
+
+    session->clientfd = malloc(sizeof(int));
+    if (!session->clientfd)
+    {
+        perror("malloc session->clientfd");
+        free(session);
+        return NULL;
+    }
+
+    return session;
+}
+
+void delete_session(Session *session)
+{
+    if (session)
+    {
+        free(session->clientfd);
+        free(session);
+    }
+}
+
+Session *accept_connection(AppContext *context, Session *session)
+{        
+    struct sockaddr_storage clientaddr;
+    socklen_t addrlen = sizeof(clientaddr);
+
+    *session->clientfd = accept(context->sockfd, (struct sockaddr *)&clientaddr, &addrlen);
+    if (errno == EINTR) 
+    {
+        delete_session(session);
+        return NULL;
+    }
+
+    if ((*session->clientfd < 0))
+    {
+        delete_session(session);
+        printf("accept error: %s\n", strerror(errno));
+        return NULL;
+    }
+
+    return session;
+}
+
 int begin_listen(AppContext *context)
 {
     context->sockfd = get_bound_socket(context->port);
@@ -34,17 +85,21 @@ int get_bound_socket(const char *port)
 
     if (populate_servinfo(port, &servinfo) < 0)
     {
+        freeaddrinfo(servinfo);
         return -1;
     }
 
     int sockfd = get_socket_fd(servinfo);
     if (sockfd < 0)
     {
+        freeaddrinfo(servinfo);
         return -1;
     }
 
     if (bind_socket(sockfd, servinfo) < 0)
     {
+        close(sockfd);
+        freeaddrinfo(servinfo);
         return -1;
     }
 
@@ -76,7 +131,6 @@ int get_socket_fd(struct addrinfo *servinfo)
     if (sockfd < 0)
     {
         printf("socket error: %s\n", strerror(errno));
-        freeaddrinfo(servinfo);
         return -1;
     }
 
@@ -88,10 +142,7 @@ int bind_socket(int fd, struct addrinfo *servinfo)
     if (bind(fd, servinfo->ai_addr, servinfo->ai_addrlen) < 0)
     {
         printf("bind error: %s\n", strerror(errno));
-        freeaddrinfo(servinfo);
-        close(fd);
         return -1;
     }
     return 0;
 }
-
