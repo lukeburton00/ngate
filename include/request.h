@@ -13,4 +13,4 @@
 
 typedef struct Session Session;
 
-Session *parse_request(Session *session);
+int parse_request(Session *session);

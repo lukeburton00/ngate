@@ -1,7 +1,7 @@
 #include "request.h"
 #include "../include/networking.h"
 
-Session *parse_request(Session *session)
+int parse_request(Session *session)
 {
     int clientfd = *(int *)session->clientfd;
 
@@ -14,10 +14,11 @@ Session *parse_request(Session *session)
         printf("recv error: %s\n", strerror(errno));
         close(clientfd);
         delete_session(session);
-        return NULL;
+        return -1;
     }
 
+    memcpy(session->full_request, request, sizeof(session->full_request));
     sscanf(request, "%s %s %s", session->method, session->path, session->protocol);
 
-    return session;
+    return 0;
 }

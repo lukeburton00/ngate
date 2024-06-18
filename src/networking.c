@@ -40,7 +40,7 @@ void delete_session(Session *session)
     }
 }
 
-Session *accept_connection(AppContext *context, Session *session)
+int accept_connection(AppContext *context, Session *session)
 {        
     struct sockaddr_storage clientaddr;
     socklen_t addrlen = sizeof(clientaddr);
@@ -49,17 +49,17 @@ Session *accept_connection(AppContext *context, Session *session)
     if (errno == EINTR) 
     {
         delete_session(session);
-        return NULL;
+        return -1;
     }
 
     if ((*session->clientfd < 0))
     {
         delete_session(session);
         printf("accept error: %s\n", strerror(errno));
-        return NULL;
+        return -1;
     }
 
-    return session;
+    return 0;
 }
 
 int begin_listen(AppContext *context)
@@ -116,7 +116,7 @@ int populate_servinfo(const char *port, struct addrinfo **servinfo)
     hints.ai_flags = AI_PASSIVE;
 
     int status;
-    if ((status = getaddrinfo(NULL, port, &hints, &*servinfo)) != 0)
+    if ((status = getaddrinfo(NULL, port, &hints, servinfo)) != 0)
     {
         printf("getaddrinfo: %s\n", gai_strerror(status));
         return -1;

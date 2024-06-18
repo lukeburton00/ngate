@@ -21,13 +21,13 @@ void handle_signal(int signal) {
 void * handle_connection(void *connection)
 {
     Session *session = (Session *)connection;
-    session = parse_request(session);
-    if (!session)
+    if (parse_request(session) < 0)
     {
         return NULL;
     }
 
     printf("%s %s %s\n", session->method, session->path, session->protocol);
+    printf(session->full_request);
 
     char response[1024];
     memset(response, 0, sizeof(response));
@@ -67,8 +67,7 @@ int main(int argc, char* argv[])
     while (!stop)
     {
         Session *session = create_session();
-        session = accept_connection(&context, session);
-        if (!session)
+        if (accept_connection(&context, session) < 0)
         {
             if (stop) 
             {
