@@ -18,12 +18,11 @@ void handle_signal(int signal) {
     stop = 1;
 }
 
-void * handle_connection(void *connection)
+void handle_connection(Session *session)
 {
-    Session *session = (Session *)connection;
     if (parse_request(session) < 0)
     {
-        return NULL;
+        return;
     }
 
     printf("%s %s %s\n", session->method, session->path, session->protocol);
@@ -40,7 +39,6 @@ void * handle_connection(void *connection)
 
     close(session->clientfd);
     delete_session(session);
-    return NULL;
 }
 
 int main(int argc, char* argv[])
@@ -76,17 +74,7 @@ int main(int argc, char* argv[])
             continue;
         }
 
-        pthread_t thread;
-
-        if (pthread_create(&thread, NULL, handle_connection, session)!= 0)
-        {
-            printf("pthread_create error, closing connection\n");
-            close(session->clientfd);
-            delete_session(session);
-            continue;
-        }
-
-        pthread_detach(thread);
+        handle_connection(session);
     }
 
     close(context.sockfd);
