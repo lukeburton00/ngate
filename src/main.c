@@ -33,12 +33,12 @@ void * handle_connection(void *connection)
     memset(response, 0, sizeof(response));
     sprintf(response, "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n\r\n<html><body><h1>Hello World!</h1></body></html>\r\n");
 
-    if (send(*session->clientfd, response, sizeof(response) - 1, 0) < 0)
+    if (send(session->clientfd, response, sizeof(response) - 1, 0) < 0)
     {
         printf("send error: %s\n", strerror(errno));
     }
 
-    close(*session->clientfd);
+    close(session->clientfd);
     delete_session(session);
     return NULL;
 }
@@ -81,7 +81,7 @@ int main(int argc, char* argv[])
         if (pthread_create(&thread, NULL, handle_connection, session)!= 0)
         {
             printf("pthread_create error, closing connection\n");
-            close(*session->clientfd);
+            close(session->clientfd);
             delete_session(session);
             continue;
         }

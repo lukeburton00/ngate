@@ -4,7 +4,7 @@
 
 typedef struct Session
 {
-    int *clientfd;
+    int clientfd;
     char method[16], path[256], protocol[16], full_request[1024];
 } Session;
 

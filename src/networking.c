@@ -20,14 +20,6 @@ Session *create_session()
         return NULL;
     }
 
-    session->clientfd = malloc(sizeof(int));
-    if (!session->clientfd)
-    {
-        perror("malloc session->clientfd");
-        free(session);
-        return NULL;
-    }
-
     return session;
 }
 
@@ -35,7 +27,6 @@ void delete_session(Session *session)
 {
     if (session)
     {
-        free(session->clientfd);
         free(session);
     }
 }
@@ -45,14 +36,14 @@ int accept_connection(AppContext *context, Session *session)
     struct sockaddr_storage clientaddr;
     socklen_t addrlen = sizeof(clientaddr);
 
-    *session->clientfd = accept(context->sockfd, (struct sockaddr *)&clientaddr, &addrlen);
+    session->clientfd = accept(context->sockfd, (struct sockaddr *)&clientaddr, &addrlen);
     if (errno == EINTR) 
     {
         delete_session(session);
         return -1;
     }
 
-    if ((*session->clientfd < 0))
+    if ((session->clientfd < 0))
     {
         delete_session(session);
         printf("accept error: %s\n", strerror(errno));

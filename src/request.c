@@ -1,9 +1,20 @@
 #include "request.h"
 #include "../include/networking.h"
 
+#include <stdlib.h>
+#include <stdio.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <unistd.h>
+#include <netdb.h>
+#include <string.h>
+#include <errno.h>
+#include <pthread.h>
+#include <signal.h>
+
 int parse_request(Session *session)
 {
-    int clientfd = *(int *)session->clientfd;
+    int clientfd = session->clientfd;
 
     char request[1024];
     memset(request, 0, sizeof(request));
