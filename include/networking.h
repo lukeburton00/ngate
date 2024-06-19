@@ -15,7 +15,5 @@ typedef struct AppContext AppContext;
 
 int accept_connection(AppContext *context, Session *session);
 int begin_listen(AppContext *context);
-static int get_bound_socket(const char *port);
-static int populate_servinfo(const char *port, struct addrinfo **servinfo);
-static int get_socket_fd(struct addrinfo *servinfo);
-static int bind_socket(int fd, struct addrinfo *servinfo);
+int get_bound_socket(const char *port);
+int get_unbound_socket();

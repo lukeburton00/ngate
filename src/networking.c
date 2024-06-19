@@ -31,6 +31,46 @@ void delete_session(Session *session)
     }
 }
 
+static int populate_servinfo(const char *port, struct addrinfo **servinfo)
+{
+    struct addrinfo hints;
+    memset(&hints, 0, sizeof(hints));
+    hints.ai_family = AF_UNSPEC;
+    hints.ai_socktype = SOCK_STREAM;
+    hints.ai_flags = AI_PASSIVE;
+
+    int status;
+    if ((status = getaddrinfo(NULL, port, &hints, servinfo)) != 0)
+    {
+        printf("getaddrinfo: %s\n", gai_strerror(status));
+        return -1;
+    }
+    return 0;
+}
+
+static int get_socket_fd(struct addrinfo *servinfo)
+{
+    int sockfd = socket(servinfo->ai_family, servinfo->ai_socktype, servinfo->ai_protocol);
+
+    if (sockfd < 0)
+    {
+        printf("socket error: %s\n", strerror(errno));
+        return -1;
+    }
+
+    return sockfd;
+}
+
+static int bind_socket(int fd, struct addrinfo *servinfo)
+{
+    if (bind(fd, servinfo->ai_addr, servinfo->ai_addrlen) < 0)
+    {
+        printf("bind error: %s\n", strerror(errno));
+        return -1;
+    }
+    return 0;
+}
+
 int accept_connection(AppContext *context, Session *session)
 {        
     struct sockaddr_storage clientaddr;
@@ -98,26 +138,9 @@ int get_bound_socket(const char *port)
     return sockfd;
 }
 
-int populate_servinfo(const char *port, struct addrinfo **servinfo)
+int get_unbound_socket()
 {
-    struct addrinfo hints;
-    memset(&hints, 0, sizeof(hints));
-    hints.ai_family = AF_UNSPEC;
-    hints.ai_socktype = SOCK_STREAM;
-    hints.ai_flags = AI_PASSIVE;
-
-    int status;
-    if ((status = getaddrinfo(NULL, port, &hints, servinfo)) != 0)
-    {
-        printf("getaddrinfo: %s\n", gai_strerror(status));
-        return -1;
-    }
-    return 0;
-}
-
-int get_socket_fd(struct addrinfo *servinfo)
-{
-    int sockfd = socket(servinfo->ai_family, servinfo->ai_socktype, servinfo->ai_protocol);
+    int sockfd = socket(AF_INET, SOCK_STREAM, 0);
 
     if (sockfd < 0)
     {
@@ -128,12 +151,3 @@ int get_socket_fd(struct addrinfo *servinfo)
     return sockfd;
 }
 
-int bind_socket(int fd, struct addrinfo *servinfo)
-{
-    if (bind(fd, servinfo->ai_addr, servinfo->ai_addrlen) < 0)
-    {
-        printf("bind error: %s\n", strerror(errno));
-        return -1;
-    }
-    return 0;
-}
