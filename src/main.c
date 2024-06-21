@@ -10,6 +10,7 @@
 #include "../include/networking.h"
 #include "../include/config.h"
 #include "../include/request.h"
+#include "../include/response.h"
 
 volatile sig_atomic_t stop = 0;
 
@@ -17,7 +18,7 @@ void handle_signal(int signal) {
     stop = 1;
 }
 
-void handle_connection(Session *session)
+void handle_connection(AppContext *context, Session *session)
 {
     if (parse_request(session) < 0)
     {
@@ -27,15 +28,24 @@ void handle_connection(Session *session)
     printf("%s %s %s\n", session->method, session->path, session->protocol);
     printf(session->full_request);
 
-    char response[1024];
-    memset(response, 0, sizeof(response));
-    sprintf(response, "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n\r\n<html><body><h1>Hello World!</h1></body></html>\r\n");
-
-    if (send(session->clientfd, response, sizeof(response) - 1, 0) < 0)
+    char *response = (char *)malloc(MAX_RESPONSE_SIZE * sizeof(char));
+    if (response == NULL)
     {
-        printf("send error: %s\n", strerror(errno));
+        fprintf(stderr, "Failed to allocate memory for request\n");
+        close(session->clientfd);
+        delete_session(session);
+        return;
     }
 
+    get_response(response, context, session);
+
+    if (send(session->clientfd, response, 1024 - 1, 0) < 0)
+    {
+        printf("send error: %s\n", strerror(errno));
+        free(response);
+    }
+
+    free(response);
     close(session->clientfd);
     delete_session(session);
 }
@@ -73,7 +83,7 @@ int main(int argc, char* argv[])
             continue;
         }
 
-        handle_connection(session);
+        handle_connection(&context, session);
     }
 
     close(context.sockfd);
