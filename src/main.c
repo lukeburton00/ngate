@@ -20,7 +20,7 @@ void handle_signal(int signal) {
 
 int main(int argc, char* argv[])
 {
-    struct sigaction act;
+    struct sigaction act = {0};
     act.sa_handler = handle_signal;
     sigaction(SIGINT, &act, NULL);
 
@@ -60,6 +60,13 @@ int main(int argc, char* argv[])
         session->clientfd = accept(sockfd, (struct sockaddr *)&clientaddr, &addrlen);
         if ((session->clientfd < 0))
         {
+            if (errno == EINTR && stop) 
+            {
+                delete_session(session);
+                printf("Exiting...\n");
+                break;
+            }
+
             delete_session(session);
             printf("accept error: %s\n", strerror(errno));
             continue;
