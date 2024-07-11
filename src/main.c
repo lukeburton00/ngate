@@ -60,22 +60,22 @@ int main(int argc, char* argv[])
         session->clientfd = accept(sockfd, (struct sockaddr *)&clientaddr, &addrlen);
         if ((session->clientfd < 0))
         {
-            if (errno == EINTR && stop) 
+            if (errno == EINTR && stop)
             {
-                delete_session(session);
                 printf("Exiting...\n");
+                delete_session(session);
                 break;
             }
 
-            delete_session(session);
             printf("accept error: %s\n", strerror(errno));
+            delete_session(session);
             continue;
         }
 
         if (parse_request(session) < 0)
         {
-            delete_session(session);
             printf("Parse request error\n");
+            delete_session(session);
             continue;
         }
 
@@ -97,6 +97,9 @@ int main(int argc, char* argv[])
         {
             printf("send error: %s\n", strerror(errno));
             free(response);
+            close(session->clientfd);
+            delete_session(session);
+            continue;
         }
 
         free(response);
