@@ -9,8 +9,6 @@ struct session
 struct session *create_session();
 void delete_session(struct session *session);
 
-typedef struct AppContext AppContext;
-
 struct addrinfo *get_info(const char *port);
 int get_socket(struct addrinfo *addrinfo);
 int bind_socket(int sockfd, struct addrinfo *info);
