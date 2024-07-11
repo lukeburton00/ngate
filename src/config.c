@@ -1,21 +1,21 @@
-#include "config.h"
+#include "../include/config.h"
 
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 
-AppContext configure_context(int argc, char **argv)
+struct config create_config(int argc, char **argv)
 {
     char *default_port = "3000";
 
-    AppContext context;
-    context.port = NULL;
+    struct config config;
+    config.port = NULL;
 
     for (int i = 1; i < argc; i++)
     {
         if ((strcmp(argv[i], "-p") == 0) && i + 1 < argc)
         {
-            context.port = argv[i + 1];
+            config.port = argv[i + 1];
         }
 
         if ((strcmp(argv[i], "-h") == 0))
@@ -25,11 +25,11 @@ AppContext configure_context(int argc, char **argv)
         }
     }
 
-    if (context.port == NULL)
+    if (config.port == NULL)
     {
         printf("No port specified. Default is %s\n", default_port);
-        context.port = default_port;
+        config.port = default_port;
     }
 
-    return context;
+    return config;
 }

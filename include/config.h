@@ -1,9 +1,8 @@
 #pragma once
 
-typedef struct AppContext 
+struct config
 {
     char *port;
-    int sockfd;
-} AppContext;
+};
 
-AppContext configure_context(int argc, char **argv);
+struct config create_config(int argc, char **argv);
