@@ -3,14 +3,10 @@
 
 #include <stdlib.h>
 #include <stdio.h>
-#include <sys/types.h>
-#include <sys/socket.h>
 #include <unistd.h>
 #include <netdb.h>
 #include <string.h>
 #include <errno.h>
-#include <pthread.h>
-#include <signal.h>
 
 int parse_request(struct session *session)
 {

@@ -1,7 +1,5 @@
 #pragma once
 
-#include <netdb.h>
-
 struct session
 {
     int clientfd;
