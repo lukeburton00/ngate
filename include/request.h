@@ -2,6 +2,6 @@
 
 #define MAX_REQUEST_SIZE 1000000
 
-typedef struct Session Session;
+struct session;
 
-int parse_request(Session *session);
+int parse_request(struct session *session);

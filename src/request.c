@@ -1,4 +1,4 @@
-#include "request.h"
+#include "../include/request.h"
 #include "../include/networking.h"
 
 #include <stdlib.h>
@@ -12,7 +12,7 @@
 #include <pthread.h>
 #include <signal.h>
 
-int parse_request(Session *session)
+int parse_request(struct session *session)
 {
     int clientfd = session->clientfd;
 
