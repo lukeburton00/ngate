@@ -2,18 +2,18 @@
 
 #include <netdb.h>
 
-typedef struct Session
+struct session
 {
     int clientfd;
     char method[16], path[256], protocol[16], full_request[1024];
-} Session;
+};
 
-Session *create_session();
-void delete_session(Session *session);
+struct session *create_session();
+void delete_session(struct session *session);
 
 typedef struct AppContext AppContext;
 
-int accept_connection(AppContext *context, Session *session);
-int begin_listen(AppContext *context);
-int get_bound_socket(const char *port);
-int get_unbound_socket();
+struct addrinfo *get_info(const char *port);
+int get_socket(struct addrinfo *addrinfo);
+int bind_socket(int sockfd, struct addrinfo *info);
+int listen_on_socket(int sockfd, int backlog_len);
