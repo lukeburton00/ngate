@@ -13,10 +13,7 @@
 #include "../include/response.h"
 
 volatile sig_atomic_t stop = 0;
-
-void handle_signal(int signal) {
-    stop = 1;
-}
+void handle_signal(int signal) { stop = 1; }
 
 int main(int argc, char* argv[])
 {
