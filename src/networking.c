@@ -1,4 +1,4 @@
-#include "networking.h"
+#include "../include/networking.h"
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -6,8 +6,6 @@
 #include <netdb.h>
 #include <string.h>
 #include <errno.h>
-
-#include "../include/config.h"
 
 struct session *create_session()
 {
