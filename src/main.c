@@ -5,10 +5,11 @@
 #include <string.h>
 #include <errno.h>
 #include <signal.h>
-#include "../include/networking.h"
+
 #include "../include/config.h"
 #include "../include/request.h"
 #include "../include/response.h"
+#include "../include/networking.h"
 
 volatile sig_atomic_t stop = 0;
 void handle_signal(int signal) { stop = 1; }
