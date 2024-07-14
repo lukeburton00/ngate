@@ -3,6 +3,7 @@
 struct config
 {
     char port[6];
+    char proxy_port[6];
     char *filepath;
 };
 
