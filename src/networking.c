@@ -71,6 +71,19 @@ int bind_socket(int sockfd, struct addrinfo *addrinfo)
     return sockfd;
 }
 
+int connect_to_socket(int sockfd, struct addrinfo *addrinfo)
+{
+    if (connect(sockfd, addrinfo->ai_addr, addrinfo->ai_addrlen) < 0)
+    {
+        perror("connect error\n");
+        freeaddrinfo(addrinfo);
+        return -1;
+    }
+
+    freeaddrinfo(addrinfo);
+    return 0;
+}
+
 
 int listen_on_socket(int sockfd, int backlog_len)
 {
