@@ -95,9 +95,57 @@ int main(int argc, char* argv[])
             close(clientfd);
             continue;
         }
-        memset(response, 0, MAX_RESPONSE_SIZE * sizeof(char));        
+        memset(response, 0, MAX_RESPONSE_SIZE * sizeof(char));
 
-        sprintf(response, "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n\r\n<html><body><h1>Hello World!</h1></body></html>\r\n");
+        struct addrinfo *proxy_info = get_info(config.proxy_port);
+        if (!info)
+        {
+            fprintf(stderr, "Addrinfo error\n");
+            free(request);
+            free(response);
+            close(clientfd);
+            continue;
+        }
+
+        int proxy_fd = get_socket(proxy_info);
+        if (proxy_fd < 0)
+        {
+            fprintf(stderr, "Socket error\n");
+            free(request);
+            free(response);
+            close(clientfd);
+            continue;
+        }
+
+        if (connect_to_socket(proxy_fd, proxy_info) < 0)
+        {
+            fprintf(stderr, "Connect error\n");
+            free(request);
+            free(response);
+            close(clientfd);
+            close(proxy_fd);
+            continue;
+        }
+
+        if (send_on_socket(proxy_fd, request) < 0)
+        {
+            fprintf(stderr, "Send error\n");
+            free(request);
+            free(response);
+            close(clientfd);
+            close(proxy_fd);
+            continue;
+        }
+
+        if (read_from_socket(proxy_fd, response) < 0)
+        {
+            fprintf(stderr, "Read error\n");
+            free(request);
+            free(response);
+            close(clientfd);
+            close(proxy_fd);
+            continue;
+        }
 
         if (send_on_socket(clientfd, response) < 0)
         {
@@ -105,12 +153,14 @@ int main(int argc, char* argv[])
             free(request);
             free(response);
             close(clientfd);
+            close(proxy_fd);
             continue;
         }
 
         free(request);
         free(response);
         close(clientfd);
+        close(proxy_fd);
     }
 
     close(sockfd);
