@@ -74,6 +74,13 @@ struct config create_config(int argc, char **argv)
             continue;
         }
 
+        if (strcmp(option->key, "proxy_port") == 0)
+        {
+            strncpy(config.proxy_port, option->value, sizeof(config.proxy_port) - 1);
+            config.proxy_port[sizeof(config.proxy_port) - 1] = '\0';
+            continue;
+        }
+
         if (strcmp(option->key, "#") == 0)
         {
             while (fgetc(config_file) != '\n'){}
@@ -87,6 +94,12 @@ struct config create_config(int argc, char **argv)
     if (!is_valid_port(config.port))
     {
         printf("Parameter port was not defined or is invalid\n");
+        exit(1);
+    }
+
+    if (!is_valid_port(config.proxy_port))
+    {
+        printf("Parameter proxy_port was not defined or is invalid\n");
         exit(1);
     }
 
