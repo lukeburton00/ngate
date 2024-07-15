@@ -7,26 +7,6 @@
 #include <string.h>
 #include <errno.h>
 
-struct session *create_session()
-{
-    struct session *session = malloc(sizeof(struct session));
-    if (!session)
-    {
-        perror("malloc session\n");
-        return NULL;
-    }
-
-    return session;
-}
-
-void delete_session(struct session *session)
-{
-    if (session)
-    {
-        free(session);
-    }
-}
-
 struct addrinfo *get_info(const char *port)
 {
     struct addrinfo *addrinfo;
@@ -49,11 +29,17 @@ struct addrinfo *get_info(const char *port)
 
 int get_socket(struct addrinfo *addrinfo)
 {
+    if (!addrinfo)
+    {
+        fprintf(stderr, "addrinfo invalid\n");
+        return -1;
+    }
+
     int sockfd = socket(addrinfo->ai_family, addrinfo->ai_socktype, addrinfo->ai_protocol);
 
     if (sockfd < 0)
     {
-        printf("socket error: %s \n", strerror(errno));
+        perror("socket error\n");
         return -1;
     }
 
@@ -62,9 +48,21 @@ int get_socket(struct addrinfo *addrinfo)
 
 int bind_socket(int sockfd, struct addrinfo *addrinfo)
 {
+    if (sockfd < 0)
+    {
+        fprintf(stderr, "sockfd invalid\n");
+        return -1;
+    }
+
+    if (!addrinfo)
+    {
+        fprintf(stderr, "addrinfo invalid\n");
+        return -1;
+    }
+
     if (bind(sockfd, addrinfo->ai_addr, addrinfo->ai_addrlen) < 0)
     {
-        close(sockfd);
+        perror("bind error\n");
         freeaddrinfo(addrinfo);
         return -1;
     }
@@ -78,14 +76,73 @@ int listen_on_socket(int sockfd, int backlog_len)
 {
     if (sockfd < 0)
     {
+        fprintf(stderr, "sockfd invalid\n");
         return -1;
     }
 
     if (listen(sockfd, backlog_len) < 0)
     {
-        printf("listen error: %s\n", strerror(errno));
-        close(sockfd);
+        perror("listen error\n");
         return -1;
     }
+    return 0;
+}
+
+int accept_on_socket(int sockfd)
+{
+    if (sockfd < 0)
+    {
+        fprintf(stderr, "sockfd invalid\n");
+        return -1;
+    }
+
+    struct sockaddr_storage clientaddr;
+    socklen_t addrlen = sizeof(clientaddr);
+
+    int clientfd = accept(sockfd, (struct sockaddr *)&clientaddr, &addrlen);
+    if ((clientfd < 0))
+    {
+        // silently fail if SIGINT is received
+        if (errno = EINTR)
+            return -1;
+
+        perror("accept error\n");
+        return -1;
+    }
+
+    return clientfd;
+}
+
+int read_from_socket(int sockfd, char *buffer)
+{
+    if (sockfd < 0)
+    {
+        fprintf(stderr, "sockfd invalid\n");
+        return -1;
+    }
+
+    if (recv(sockfd, buffer, MAX_REQUEST_SIZE - 1, 0) < 0)
+    {
+        perror("recv error\n");
+        return -1;
+    }
+    
+    return 0;
+}
+
+int send_on_socket(int sockfd, char *message)
+{
+    if (sockfd < 0)
+    {
+        fprintf(stderr, "sockfd invalid\n");
+        return -1;
+    }
+
+    if (send(sockfd, message, strlen(message), 0) < 0)
+    {
+        perror("send error\n");
+        return -1;
+    }
+
     return 0;
 }
