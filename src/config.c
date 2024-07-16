@@ -54,14 +54,14 @@ struct config create_config(int argc, char **argv)
     FILE *config_file = fopen(config.filepath, "r");
     if (!config_file)
     {
-        printf("Failed to open config file\n");
+        fprintf(stderr, "Failed to open config file\n");
         exit(1);
     }
 
     struct config_option *option = calloc(1, sizeof(struct config_option));
     if (!option)
     {
-        printf("Calloc error");
+        fprintf(stderr, "Calloc error");
         exit(1);
     }
 
@@ -93,13 +93,13 @@ struct config create_config(int argc, char **argv)
 
     if (!is_valid_port(config.port))
     {
-        printf("Parameter port was not defined or is invalid\n");
+        fprintf(stderr, "Parameter port was not defined or is invalid\n");
         exit(1);
     }
 
     if (!is_valid_port(config.proxy_port))
     {
-        printf("Parameter proxy_port was not defined or is invalid\n");
+        fprintf(stderr, "Parameter proxy_port was not defined or is invalid\n");
         exit(1);
     }
 
