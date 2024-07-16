@@ -55,7 +55,6 @@ int main(int argc, char* argv[])
         int clientfd = accept_on_socket(sockfd);
         if (clientfd < 0)
         {
-            close(clientfd);
             if (stop)
             {
                 printf("Exiting...\n");
