@@ -116,7 +116,7 @@ int accept_on_socket(int sockfd)
     if ((clientfd < 0))
     {
         // silently fail if SIGINT is received
-        if (errno = EINTR)
+        if (errno == EINTR)
             return -1;
 
         perror("accept error\n");
@@ -139,7 +139,7 @@ int read_from_socket(int sockfd, char *buffer)
         perror("recv error\n");
         return -1;
     }
-    
+
     return 0;
 }
 
