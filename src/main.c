@@ -97,7 +97,7 @@ int main(int argc, char* argv[])
         memset(response, 0, MAX_RESPONSE_SIZE * sizeof(char));
 
         struct addrinfo *proxy_info = get_info(config.proxy_port);
-        if (!info)
+        if (!proxy_info)
         {
             fprintf(stderr, "Addrinfo error\n");
             free(request);
