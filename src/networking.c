@@ -36,12 +36,14 @@ int get_socket(struct addrinfo *addrinfo)
     }
 
     int sockfd = socket(addrinfo->ai_family, addrinfo->ai_socktype, addrinfo->ai_protocol);
-
     if (sockfd < 0)
     {
         perror("socket error\n");
         return -1;
     }
+
+    if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &(int){1}, sizeof(int)) < 0)
+        perror("setsockopt SO_REUSEADDR error\n");
 
     return sockfd;
 }
