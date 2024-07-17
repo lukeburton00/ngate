@@ -64,7 +64,7 @@ int get_request(int clientfd, char *buffer)
     return 0;
 }
 
-int get_response(char *request, char *buffer, const char *proxy_port)
+int get_response(char *buffer, char *request, const char *proxy_port)
 {
     struct addrinfo *proxy_info = get_info(proxy_port);
     if (!proxy_info)
@@ -154,6 +154,7 @@ int handle_client(int clientfd, const char *proxy_port)
     free(request);
     free(response);
     close(clientfd);
+    return 0;
 }
 
 int main(int argc, char* argv[])
@@ -188,7 +189,8 @@ int main(int argc, char* argv[])
             continue;
         }
 
-        handle_client(clientfd, config.proxy_port);
+        if (handle_client(clientfd, config.proxy_port) < 0)
+            continue;
     }
 
     close(serverfd);
