@@ -7,6 +7,10 @@
 
 # Output
 build
+bin
+out
+debug
+release
 
 # Config
 ngate.conf
