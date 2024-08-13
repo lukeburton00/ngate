@@ -6,7 +6,7 @@ nGate is a simple reverse proxy written in C. It allows you to configure proxy r
 
 nGate uses CMake. To install nGate, clone the repository and build the program:
 ```
-git clone https://github.com/yourusername/ngate.git
+git clone https://github.com/lukeburton00/ngate.git
 cd ngate
 mkdir bin && cd bin
 cmake ..
