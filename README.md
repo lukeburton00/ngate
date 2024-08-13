@@ -1,6 +1,6 @@
 # nGate
 
-nGate is a simple reverse proxy written in C. It allows you to configure proxy rules using a configuration file specified by the -f flag. nGate is designed to be straightforward and efficient.
+nGate is a simple reverse proxy written in C. It allows you to configure proxy rules using a configuration file specified by the -f flag. nGate is designed primarily to be straightforward and simple to understand.
 
 ## Installation
 
@@ -34,7 +34,7 @@ proxy_port = 3000
 - proxy_port = [port] - The backend server to proxy requests to.
 
 ## Future
-nGate will support:
+I plan to add the following features:
 - Load balancing
 - SSL connections
 - Response caching
