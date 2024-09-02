@@ -102,6 +102,7 @@ int get_response(char *buffer, char *request, const char *proxy_port)
     }
 
     close(proxy_fd);
+    return 0;
 }
 
 int handle_client(int clientfd, const char *proxy_port)
