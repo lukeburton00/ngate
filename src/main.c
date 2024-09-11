@@ -94,8 +94,24 @@ int get_response(char *buffer, char *request, const char *proxy_port)
         return -1;
     }
 
+    struct timeval timeout;
+    timeout.tv_sec = 10;
+    timeout.tv_usec = 0;
+
+    if (set_timeout_sockopt(proxy_fd, &timeout) < 0)
+    {
+        fprintf(stderr, "timeout sockopt error");
+        close(proxy_fd);
+        return -1;
+    }
+
     if (read_from_socket(proxy_fd, buffer) < 0)
     {
+        if ((errno != EAGAIN) && (errno != EWOULDBLOCK))
+        {
+            fprintf(stderr, "Gateway timed out\n");
+        }
+
         fprintf(stderr, "Read error\n");
         close(proxy_fd);
         return -1;
@@ -137,6 +153,7 @@ int handle_client(int clientfd, const char *proxy_port)
     if (get_response(response, request, proxy_port) < 0)
     {
         fprintf(stderr, "Failed to receive server response.\n");
+        // TODO: return 502 Gateway Error
         free(request);
         free(response);
         close(clientfd);
