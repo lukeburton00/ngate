@@ -9,6 +9,12 @@
 #include "../include/config.h"
 #include "../include/networking.h"
 
+#define BAD_GATEWAY_RESPONSE "HTTP/1.1 502 Bad Gateway\r\n" \
+                             "Content-Type: text/html\r\n" \
+                             "Content-Length: 55\r\n" \
+                             "\r\n" \
+                             "<html><body><h1>502 Bad Gateway</h1></body></html>"
+
 volatile sig_atomic_t stop = 0;
 void handle_signal(int signal) { stop = 1; }
 
@@ -153,7 +159,10 @@ int handle_client(int clientfd, const char *proxy_port)
     if (get_response(response, request, proxy_port) < 0)
     {
         fprintf(stderr, "Failed to receive server response.\n");
-        // TODO: return 502 Gateway Error
+        if (send_on_socket(clientfd, BAD_GATEWAY_RESPONSE) < 0)
+        {
+            fprintf(stderr, "Failed to send 502 response.");
+        }
         free(request);
         free(response);
         close(clientfd);
