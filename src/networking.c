@@ -161,3 +161,14 @@ int send_on_socket(int sockfd, char *message)
 
     return 0;
 }
+
+int set_timeout_sockopt(int sockfd, struct timeval *timeout)
+{
+    if (setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, timeout, sizeof(*timeout)) < 0)
+    {
+        fprintf(stderr, "Failed to set timeout sockopt");
+        return -1;
+    }
+
+    return 0;
+}
